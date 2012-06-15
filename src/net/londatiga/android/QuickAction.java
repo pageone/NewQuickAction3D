@@ -145,57 +145,35 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 	/**
 	 * Add action item
 	 * 
-	 * @param action  {@link ActionItem}
+	 * @param action  {@link DefaultActionItem}
 	 */
 	public void addActionItem(ActionItem action) {
 		actionItems.add(action);
 		
-		String title 	= action.getTitle();
-		Drawable icon 	= action.getIcon();
-		
-		View container;
-		
-		if (mOrientation == HORIZONTAL) {
-            container = mInflater.inflate(R.layout.action_item_horizontal, null);
-        } else {
-            container = mInflater.inflate(R.layout.action_item_vertical, null);
-        }
-		
-		ImageView img 	= (ImageView) container.findViewById(R.id.iv_icon);
-		TextView text 	= (TextView) container.findViewById(R.id.tv_title);
-		
-		if (icon != null) {
-			img.setImageDrawable(icon);
-		} else {
-			img.setVisibility(View.GONE);
-		}
-		
-		if (title != null) {
-			text.setText(title);
-		} else {
-			text.setVisibility(View.GONE);
-		}
+		View container = action.getView(mInflater, mOrientation);
 		
 		final int pos 		=  mChildPos;
 		final int actionId 	= action.getActionId();
 		
-		container.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				if (mItemClickListener != null) {
-                    mItemClickListener.onItemClick(QuickAction.this, pos, actionId);
-                }
-				
-                if (!getActionItem(pos).isSticky()) {  
-                	mDidAction = true;
-                	
-                    dismiss();
-                }
-			}
-		});
-		
-		container.setFocusable(true);
-		container.setClickable(true);
+		if (action.respondsToClicks()) {
+			container.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					if (mItemClickListener != null) {
+	                    mItemClickListener.onItemClick(QuickAction.this, pos, actionId);
+	                }
+					
+	                if (!getActionItem(pos).isSticky()) {  
+	                	mDidAction = true;
+	                	
+	                    dismiss();
+	                }
+				}
+			});
+			
+			container.setFocusable(true);
+			container.setClickable(true);
+		}
 			 
 		if (mOrientation == HORIZONTAL && mChildPos != 0) {
             View separator = mInflater.inflate(R.layout.horiz_separator, null);
@@ -249,7 +227,12 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 		
 		//automatically get X coord of popup (top left)
 		if ((anchorRect.left + rootWidth) > screenWidth) {
-			xPos 		= anchorRect.left - (rootWidth-anchor.getWidth());			
+			
+			int arrowWidth = mArrowUp.getMeasuredWidth();
+			int compWidth = Math.max(arrowWidth, anchor.getWidth());
+			
+			// shift the 
+			xPos 		= anchorRect.left - (rootWidth-compWidth);			
 			xPos 		= (xPos < 0) ? 0 : xPos;
 			
 			arrowPos 	= anchorRect.centerX()-xPos;
